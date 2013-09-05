@@ -8,6 +8,7 @@
 
 #import "SIAlertView.h"
 #import <QuartzCore/QuartzCore.h>
+#import "StyleSheet.h"
 
 NSString *const SIAlertViewWillShowNotification = @"SIAlertViewWillShowNotification";
 NSString *const SIAlertViewDidShowNotification = @"SIAlertViewDidShowNotification";
@@ -45,6 +46,7 @@ static SIAlertView *__si_alert_current_view;
 
 @property (nonatomic, strong) UILabel *titleLabel;
 @property (nonatomic, strong) UILabel *messageLabel;
+@property (nonatomic, strong) UIImageView *badgeImageView;
 @property (nonatomic, strong) UIView *containerView;
 @property (nonatomic, strong) NSMutableArray *buttons;
 
@@ -220,6 +222,18 @@ static SIAlertView *__si_alert_current_view;
 	return self;
 }
 
+- (id)initWithTitle:(NSString *)title andMessage:(NSString *)message andImagePath:(NSString *)imagePath
+{
+    self = [super init];
+	if (self) {
+		_title = title;
+        _message = message;
+        _badgeImagePath = imagePath;
+		self.items = [[NSMutableArray alloc] init];
+	}
+	return self;
+}
+
 #pragma mark - Class methods
 
 + (NSMutableArray *)sharedQueue
@@ -292,6 +306,12 @@ static SIAlertView *__si_alert_current_view;
 - (void)setMessage:(NSString *)message
 {
 	_message = message;
+    [self invalidateLayout];
+}
+
+- (void)setBadgeImagePath:(NSString *)badgeImagePath
+{
+	_badgeImagePath = badgeImagePath;
     [self invalidateLayout];
 }
 
@@ -766,6 +786,7 @@ static SIAlertView *__si_alert_current_view;
     [self setupContainerView];
     [self updateTitleLabel];
     [self updateMessageLabel];
+    [self updateBadgeImageView];
     [self setupButtons];
     [self invalidateLayout];
 }
@@ -844,6 +865,27 @@ static SIAlertView *__si_alert_current_view;
     [self invalidateLayout];
 }
 
+- (void) updateBadgeImageView
+{
+
+    if (self.badgeImagePath)
+    {
+        if (!self.badgeImageView) {
+            self.badgeImageView = [[UIImageView alloc] initWithFrame:self.bounds];
+            [self.containerView addSubview:self.badgeImageView];
+        }
+        [self.badgeImageView setImage:[UIImage imageNamed:self.badgeImagePath]];
+        
+    }
+    else {
+        [self.badgeImageView removeFromSuperview];
+        self.badgeImageView = nil;
+    }
+        
+    [self invalidateLayout];
+
+}
+
 - (void)setupButtons
 {
     self.buttons = [[NSMutableArray alloc] initWithCapacity:self.items.count];
@@ -879,10 +921,10 @@ static SIAlertView *__si_alert_current_view;
 			break;
 		case SIAlertViewButtonTypeDefault:
 		default:
-			normalImage = [UIImage imageNamed:@"SIAlertView.bundle/button-default"];
-			highlightedImage = [UIImage imageNamed:@"SIAlertView.bundle/button-default-d"];
-			[button setTitleColor:self.buttonColor forState:UIControlStateNormal];
-            [button setTitleColor:[self.buttonColor colorWithAlphaComponent:0.8] forState:UIControlStateHighlighted];
+            normalImage = [UIImage imageNamed:@"tn_regular_btn"];
+			highlightedImage = [UIImage imageNamed:@"tn_selected_btn"];
+			[button setTitleColor:STYLEVAR(tnDefaultButtonTextColor) forState:UIControlStateNormal];
+            [button setTitleColor:STYLEVAR(tnDefaultHighlightedButtonTextColor) forState:UIControlStateHighlighted];
 			break;
 	}
 	CGFloat hInset = floorf(normalImage.size.width / 2);
