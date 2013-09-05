@@ -27,6 +27,7 @@ NSString *const SIAlertViewDidDismissNotification = @"SIAlertViewDidDismissNotif
 #define BUTTON_HEIGHT 44
 #define CONTAINER_WIDTH 300
 
+
 const UIWindowLevel UIWindowLevelSIAlert = 1999.0;  // don't overlap system's alert
 const UIWindowLevel UIWindowLevelSIAlertBackground = 1998.0; // below the alert window
 
@@ -672,15 +673,35 @@ static SIAlertView *__si_alert_current_view;
     CGFloat height = [self preferredHeight];
     CGFloat left = (self.bounds.size.width - CONTAINER_WIDTH) * 0.5;
     CGFloat top = (self.bounds.size.height - height) * 0.5;
+    CGFloat imageTitleHeightRatio = 1.2;
     self.containerView.transform = CGAffineTransformIdentity;
     self.containerView.frame = CGRectMake(left, top, CONTAINER_WIDTH, height);
     self.containerView.layer.shadowPath = [UIBezierPath bezierPathWithRoundedRect:self.containerView.bounds cornerRadius:self.containerView.layer.cornerRadius].CGPath;
     
     CGFloat y = CONTENT_PADDING_TOP;
+    if (self.badgeImagePath) {
+        UIImage * image = [UIImage imageNamed:self.badgeImagePath];
+        
+        CGFloat titleHeight = [self heightForTitleLabel];
+        titleHeight = titleHeight * imageTitleHeightRatio;
+        
+        CGFloat heightRatio = titleHeight/image.size.height;
+        CGFloat imageWidth = heightRatio * image.size.width;
+        
+        [self.badgeImageView setFrame:CGRectMake(CONTENT_PADDING_LEFT , CONTENT_PADDING_TOP, imageWidth, titleHeight)];
+    }
 	if (self.titleLabel) {
         self.titleLabel.text = self.title;
         CGFloat height = [self heightForTitleLabel];
-        self.titleLabel.frame = CGRectMake(CONTENT_PADDING_LEFT, y, self.containerView.bounds.size.width - CONTENT_PADDING_LEFT * 2, height);
+        CGFloat imageWidth = 0;
+        
+        if (self.badgeImagePath)
+        {
+            imageWidth = self.badgeImageView.size.width + CONTENT_PADDING_LEFT;
+            y = imageTitleHeightRatio * y;
+        }
+        
+        self.titleLabel.frame = CGRectMake(CONTENT_PADDING_LEFT + imageWidth, y, self.containerView.bounds.size.width - CONTENT_PADDING_LEFT * 2 - imageWidth, height);
         y += height;
 	}
     if (self.messageLabel) {
@@ -751,6 +772,12 @@ static SIAlertView *__si_alert_current_view;
 - (CGFloat)heightForTitleLabel
 {
     if (self.titleLabel) {
+        
+        int imageWidth = 0;
+        
+        if (self.badgeImagePath)
+            imageWidth = [UIImage imageNamed:self.badgeImagePath].size.width;
+        
         CGSize size = [self.title sizeWithFont:self.titleLabel.font
                                    minFontSize:
 #if __IPHONE_OS_VERSION_MIN_REQUIRED >= __IPHONE_6_0
@@ -759,7 +786,7 @@ static SIAlertView *__si_alert_current_view;
                        self.titleLabel.minimumFontSize
 #endif
                                 actualFontSize:nil
-                                      forWidth:CONTAINER_WIDTH - CONTENT_PADDING_LEFT * 2
+                                      forWidth:CONTAINER_WIDTH - CONTENT_PADDING_LEFT * 2 - imageWidth
                                  lineBreakMode:self.titleLabel.lineBreakMode];
         return size.height;
     }
@@ -818,12 +845,18 @@ static SIAlertView *__si_alert_current_view;
 {
 	if (self.title) {
 		if (!self.titleLabel) {
+            
 			self.titleLabel = [[UILabel alloc] initWithFrame:self.bounds];
-			self.titleLabel.textAlignment = NSTextAlignmentCenter;
             self.titleLabel.backgroundColor = [UIColor clearColor];
 			self.titleLabel.font = self.titleFont;
             self.titleLabel.textColor = self.titleColor;
             self.titleLabel.adjustsFontSizeToFitWidth = YES;
+            
+            if (self.badgeImagePath)
+                self.titleLabel.textAlignment = NSTextAlignmentLeft;
+            else
+                self.titleLabel.textAlignment = NSTextAlignmentCenter;
+            
 #if __IPHONE_OS_VERSION_MIN_REQUIRED >= __IPHONE_6_0
             self.titleLabel.minimumScaleFactor = 0.75;
 #else
@@ -870,11 +903,12 @@ static SIAlertView *__si_alert_current_view;
 
     if (self.badgeImagePath)
     {
+        UIImage * image = [UIImage imageNamed:self.badgeImagePath];
         if (!self.badgeImageView) {
             self.badgeImageView = [[UIImageView alloc] initWithFrame:self.bounds];
             [self.containerView addSubview:self.badgeImageView];
         }
-        [self.badgeImageView setImage:[UIImage imageNamed:self.badgeImagePath]];
+        [self.badgeImageView setImage:image];
         
     }
     else {
@@ -1109,5 +1143,6 @@ static SIAlertView *__si_alert_current_view;
         }
     }
 }
+
 
 @end
